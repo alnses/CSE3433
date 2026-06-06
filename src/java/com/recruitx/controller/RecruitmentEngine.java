@@ -1,0 +1,65 @@
+package com.recruitx.controller;
+
+import com.recruitx.config.DBConnection;
+import com.recruitx.config.SimulatedRabbitMQ;
+import com.recruitx.model.User;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.*;
+
+@WebServlet("/RecruitmentEngine")
+public class RecruitmentEngine extends HttpServlet {
+
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) 
+            throws ServletException, IOException {
+        HttpSession session = request.getSession(false);
+        if (session == null || session.getAttribute("currentUser") == null) {
+            response.sendRedirect("login.jsp");
+            return;
+        }
+
+        User user = (User) session.getAttribute("currentUser");
+        String action = request.getParameter("action");
+
+        try (Connection conn = DBConnection.getConnection()) {
+            if ("postJob".equals(action)) { // FR01 - Recruiter issues vacancy listings
+                String title = request.getParameter("title");
+                String desc = request.getParameter("description");
+                String reqs = request.getParameter("requirements");
+
+                String insertSql = "INSERT INTO jobs (title, description, requirements, recruiter_id) VALUES (?, ?, ?, ?)";
+                try (PreparedStatement stmt = conn.prepareStatement(insertSql)) {
+                    stmt.setString(1, title);
+                    stmt.setString(2, desc);
+                    stmt.setString(3, reqs);
+                    stmt.setInt(4, user.getId());
+                    stmt.executeUpdate();
+                }
+
+                // PUBLISH THE ASYNCHRONOUS BACKGROUND EVENT VIA RABBITMQ STREAM
+                SimulatedRabbitMQ.publishEvent("JobPosted", "title:" + title);
+                session.setAttribute("successMsg", "Job Distributed to Public Boards via RabbitMQ!");
+                response.sendRedirect("recruiter/recruiterDashboard.jsp");
+
+            } else if ("applyJob".equals(action)) { // FR02 - Candidate application submission
+                int jobId = Integer.parseInt(request.getParameter("jobId"));
+                String resumeName = request.getParameter("resumeName");
+
+                // CRITICAL ASYNCHRONOUS EDA EVENT: Publish data straight to the broker
+                String payload = "jobId:" + jobId + ",candidateId:" + user.getId() + ",resume:" + resumeName;
+                SimulatedRabbitMQ.publishEvent("ApplicationReceived", payload);
+
+                session.setAttribute("successMsg", "Application Received Event Fired! Background screening active.");
+                response.sendRedirect("candidate/candidatePortal.jsp");
+            }
+        } catch (SQLException e) {
+            throw new ServletException("Database system connection transaction failure", e);
+        } catch (Exception e) {
+            throw new ServletException("General processing exception inside EDA workflow", e);
+        }
+    }
+}

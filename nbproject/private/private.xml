@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project-private xmlns="http://www.netbeans.org/ns/project-private/1">
+    <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
+    <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
+        <group>
+            <file>file:/C:/Users/ACER/OneDrive/Documents/CSE3433/Project/RecruitXProject/web/index.html</file>
+            <file>file:/C:/Users/ACER/OneDrive/Documents/CSE3433/Project/RecruitXProject/src/java/com/recruitx/model/User.java</file>
+            <file>file:/C:/Users/ACER/OneDrive/Documents/CSE3433/Project/RecruitXProject/src/java/com/recruitx/config/DBConnection.java</file>
+            <file>file:/C:/Users/ACER/OneDrive/Documents/CSE3433/Project/RecruitXProject/web/recruiter/recruiterDashboard.jsp</file>
+            <file>file:/C:/Users/ACER/OneDrive/Documents/CSE3433/Project/RecruitXProject/web/includes/header.jsp</file>
+            <file>file:/C:/Users/ACER/OneDrive/Documents/CSE3433/Project/RecruitXProject/web/css/styles.css</file>
+            <file>file:/C:/Users/ACER/OneDrive/Documents/CSE3433/Project/RecruitXProject/src/java/com/recruitx/config/SimulatedRabbitMQ.java</file>
+            <file>file:/C:/Users/ACER/OneDrive/Documents/CSE3433/Project/RecruitXProject/src/java/com/recruitx/controller/RecruitmentEngine.java</file>
+            <file>file:/C:/Users/ACER/OneDrive/Documents/CSE3433/Project/RecruitXProject/src/java/com/recruitx/model/Job.java</file>
+            <file>file:/C:/Users/ACER/OneDrive/Documents/CSE3433/Project/RecruitXProject/src/java/com/recruitx/consumers/ApplicationConsumer.java</file>
+            <file>file:/C:/Users/ACER/OneDrive/Documents/CSE3433/Project/RecruitXProject/src/java/com/recruitx/consumers/NotificationConsumer.java</file>
+            <file>file:/C:/Users/ACER/OneDrive/Documents/CSE3433/Project/RecruitXProject/web/WEB-INF/web.xml</file>
+            <file>file:/C:/Users/ACER/OneDrive/Documents/CSE3433/Project/RecruitXProject/web/candidate/candidatePortal.jsp</file>
+            <file>file:/C:/Users/ACER/OneDrive/Documents/CSE3433/Project/RecruitXProject/src/java/com/recruitx/consumers/ResumeScreeningConsumer.java</file>
+            <file>file:/C:/Users/ACER/OneDrive/Documents/CSE3433/Project/RecruitXProject/src/java/com/recruitx/controller/AuthServlet.java</file>
+        </group>
+    </open-files>
+</project-private>
