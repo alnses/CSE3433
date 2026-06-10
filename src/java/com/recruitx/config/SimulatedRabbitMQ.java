@@ -1,5 +1,7 @@
 package com.recruitx.config;
 
+import com.recruitx.consumers.AnalyticsConsumer;
+import com.recruitx.consumers.InterviewConsumer;
 import com.recruitx.consumers.ApplicationConsumer;
 import com.recruitx.consumers.ResumeScreeningConsumer;
 import com.recruitx.consumers.NotificationConsumer;
@@ -28,5 +30,9 @@ public class SimulatedRabbitMQ {
         } else if ("JobPosted".equals(eventType) || "ApplicationStatusChanged".equals(eventType) || "InterviewRequested".equals(eventType)) {
             threadPool.execute(() -> NotificationConsumer.process(eventType, jsonPayload));
         }
+    }
+
+    public static void sendMessage(String jobexchange, String routingjobposted, String payload) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
 }

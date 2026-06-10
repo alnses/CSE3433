@@ -1,101 +1,139 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
-<%@page import="com.recruitx.model.User, com.recruitx.config.DBConnection, java.sql.*"%>
+<%@page import="com.recruitx.model.User"%>
+
 <%
     User user = (User) session.getAttribute("currentUser");
+
     if (user == null || !"RECRUITER".equals(user.getRole())) {
         response.sendRedirect("../login.jsp");
         return;
     }
 %>
+
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Recruiter Command Console | RecruitX</title>
-        <link rel="stylesheet" type="text/css" href="../css/styles.css">
+        <meta charset="UTF-8">
+        <title>RecruitX Recruiter Dashboard</title>
+
+        <link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/css/styles.css">
     </head>
+
     <body>
-        <%@include file="../includes/header.jsp" %>
 
-        <% if (session.getAttribute("successMsg") != null) {%>
-        <div class="msg-banner"><%= session.getAttribute("successMsg")%></div>
-        <% session.removeAttribute("successMsg"); %>
-        <% } %>
+        <jsp:include page="../includes/header.jsp" />
 
-        <div class="main-layout grid-wide">
-            <div>
-                <div class="card">
-                    <h3>📢 Publish New Job Opening Vacancy</h3>
-                    <form action="../RecruitmentEngine" method="POST">
-                        <input type="hidden" name="action" value="postJob" />
-                        <label>Job Designation Title</label>
-                        <input type="text" name="title" placeholder="e.g. Senior Software Architect" required />
-                        <label>Core Scope Description</label>
-                        <textarea name="description" rows="3" required></textarea>
-                        <label>Pre-defined Keywords Filter Set</label>
-                        <input type="text" name="requirements" placeholder="e.g. Java, Cloud Computing, Architecture" required />
-                        <button type="submit">Publish & Broadcast Job</button>
-                    </form>
+        <main class="portal-main fade-in">
+
+            <div class="dashboard-alert">
+                <div>
+                    <p class="alert-title">
+                        Recruitment Operations Centre Active
+                    </p>
+                    <p class="alert-desc">
+                        RecruitX Event Bus is currently monitoring recruitment workflows and processing incoming events.
+                    </p>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value">12</div>
+                    <div class="stat-label">Open Jobs</div>
                 </div>
 
-                <div class="card">
-                    <h3>⚡ RabbitMQ Live Message Stream Log (EDA Pipeline Audit)</h3>
-                    <div style="max-height:220px; overflow-y:auto; font-family:monospace; font-size:12px; background:#1e293b; color:#38bdf8; padding:15px; border-radius:8px;">
-                        <%
-                            try (Connection conn = DBConnection.getConnection(); Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery("SELECT * FROM event_logs ORDER BY id DESC")) {
-                                while (rs.next()) {
-                        %>
-                        [<%= rs.getTimestamp("processed_at")%>] EVENT: <b><%= rs.getString("event_type")%></b> -> Payload: <%= rs.getString("payload")%><br><br>
-                        <%
-                                }
-                            } catch (Exception e) {
-                                out.print("Error polling event stream.");
-                            }
-                        %>
+                <div class="stat-card">
+                    <div class="stat-value">56</div>
+                    <div class="stat-label">Applications</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-value">18</div>
+                    <div class="stat-label">Shortlisted</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-value">8</div>
+                    <div class="stat-label">Interviews</div>
+                </div>
+            </div>
+
+            <div class="section-wrapper">
+                <div class="section-heading-group">
+                    <h2>Recruitment Management</h2>
+                </div>
+
+                <div class="dashboard-grid">
+                    <div class="dashboard-card">
+                        <h3>Create Job Posting</h3>
+                        <p>
+                            Publish new vacancies and trigger the JobPosted event.
+                        </p>
+                        <a href="createJob.jsp">
+                            Open Module
+                        </a>
+                    </div>
+
+                    <div class="dashboard-card">
+                        <h3>Candidate Management</h3>
+                        <p>
+                            Review candidate applications and update recruitment status.
+                        </p>
+                        <a href="candidateManagement.jsp">
+                            Open Module
+                        </a>
+                    </div>
+
+                    <div class="dashboard-card">
+                        <h3>Interview Scheduling</h3>
+                        <p>
+                            Schedule candidate interviews and trigger InterviewRequested events.
+                        </p>
+                        <a href="scheduleInterview.jsp">
+                            Open Module
+                        </a>
                     </div>
                 </div>
             </div>
 
-            <div class="card">
-                <h3>📥 Inbound Candidates Tracking funnel</h3>
-                <table>
-                    <thead><tr><th>Candidate</th><th>Applied Role</th><th>Status</th><th>Automated Match Metrics</th></tr></thead>
-                    <tbody>
-                        <%
-                            String query = "SELECT u.full_name, j.title, a.status, s.fit_score, s.keyword_matches FROM applications a "
-                                    + "JOIN users u ON a.candidate_id = u.id "
-                                    + "JOIN jobs j ON a.job_id = j.id "
-                                    + "LEFT JOIN screening_results s ON s.application_id = a.id ORDER BY a.id DESC";
-                            try (Connection conn = DBConnection.getConnection(); Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(query)) {
-                                while (rs.next()) {
-                                    String status = rs.getString("status");
-                                    String badge = "badge-sub";
-                                    if ("SHORTLISTED".equals(status)) {
-                                        badge = "badge-short";
-                                    }
-                                    if ("REJECTED".equals(status)) {
-                                    badge = "badge-rej";
-                                }
-                                Mosc;%>
-                        <tr>
-                            <td><b><%= rs.getString("full_name")%></b></td>
-                            <td><%= rs.getString("title")%></td>
-                            <td><span class="status-badge <%= badge%>"><%= status%></span></td>
-                            <td>
-                                <% if (rs.getString("keyword_matches") != null) {%>
-                                Match: <b style="color:#10b981;"><%= rs.getInt("fit_score")%>%</b><br><small><%= rs.getString("keyword_matches")%></small>
-                                <% } else { %>
-                                <span style="color:orange;">Evaluating...</span>
-                                <% } %>
-                            </td>
-                        </tr>
-                        <%
-                                }
-                            } catch (Exception e) {
-                            }
-                        %>
-                    </tbody>
-                </table>
+            <div class="section-wrapper">
+                <div class="section-heading-group">
+                    <h2>Event Bus Monitoring</h2>
+                    <span class="badge-stream broker-active">
+                        RabbitMQ Simulation Active
+                    </span>
+                </div>
+
+                <div class="card-panel">
+                    <div class="event-log-container">
+                        [INFO] RecruitX Event Bus Initialized...<br>
+                        [EVENT] JobPosted Event Waiting...<br>
+                        [EVENT] ApplicationReceived Event Waiting...<br>
+                        [EVENT] InterviewRequested Event Waiting...<br>
+                        [SERVICE] Notification Consumer Ready...<br>
+                        [SERVICE] Resume Screening Consumer Ready...<br>
+                        [SERVICE] Analytics Consumer Ready...<br>
+                    </div>
+                </div>
             </div>
-        </div>
+
+        </main>
+
+        <footer class="portal-footer">
+            <div class="footer-container">
+                <div>
+                    RecruitX Recruitment Management Platform
+                </div>
+                <div class="footer-links">
+                    <span class="tag-version">
+                        v1.0
+                    </span>
+                    <span>
+                        Event Driven Architecture
+                    </span>
+                </div>
+            </div>
+        </footer>
+
     </body>
 </html>

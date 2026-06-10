@@ -55,7 +55,33 @@ public class RecruitmentEngine extends HttpServlet {
 
                 session.setAttribute("successMsg", "Application Received Event Fired! Background screening active.");
                 response.sendRedirect("candidate/candidatePortal.jsp");
+
+            } else if ("updateStatus".equals(action)) { // NEW: Handles status updates from candidateManagement.jsp
+                String applicationIdStr = request.getParameter("applicationId");
+                String newStatus = request.getParameter("status");
+
+                if (applicationIdStr != null && newStatus != null) {
+                    int applicationId = Integer.parseInt(applicationIdStr);
+
+                    // 1. Update status in the database (Assuming table is 'applications' or 'candidate_applications')
+                    String updateSql = "UPDATE applications SET status = ? WHERE id = ?";
+                    try (PreparedStatement stmt = conn.prepareStatement(updateSql)) {
+                        stmt.setString(1, newStatus);
+                        stmt.setInt(2, applicationId);
+                        stmt.executeUpdate();
+                    }
+
+                    // 2. Asynchronous EDA Event: Publish status update to RabbitMQ broker
+                    String payload = "applicationId:" + applicationId + ",status:" + newStatus + ",recruiterId:" + user.getId();
+                    SimulatedRabbitMQ.publishEvent("ApplicationStatusUpdated", payload);
+
+                    session.setAttribute("successMsg", "Candidate status updated and event published successfully!");
+                }
+                
+                // 3. Crucial redirect to prevent the blank page loop
+                response.sendRedirect("recruiter/candidateManagement.jsp");
             }
+            
         } catch (SQLException e) {
             throw new ServletException("Database system connection transaction failure", e);
         } catch (Exception e) {

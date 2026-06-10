@@ -31,6 +31,7 @@
             }
 
             .left-panel h1 {
+                box-sizing: border-box;
                 font-size: 42px;
                 font-weight: 700;
                 margin-bottom: 15px;
@@ -87,7 +88,6 @@
                 margin-bottom: 25px;
             }
 
-            /* ================= ROLE SELECTOR TAB SYSTEM ================= */
             .role-tabs {
                 display: flex;
                 background: #f1f5f9;
@@ -230,14 +230,13 @@
         <div class="left-panel">
             <h1>RecruitX Portal</h1>
             <p>
-                Welcome to the Event-Driven Job Recruitment & Application Processing System[cite: 9, 10]. 
-                Track job applications, process incoming resumes, and manage interview channels instantly[cite: 22].
+                Welcome to the Event-Driven Job Recruitment & Application Processing System. 
+                Track job applications, process incoming resumes, and manage interview channels instantly.
             </p>
             <div class="badge">Candidate • Recruiter • Asynchronous Broker</div>
         </div>
 
         <div class="right-panel">
-
             <div class="login-box">
 
                 <% if (request.getAttribute("error") != null) {%>
@@ -258,7 +257,6 @@
 
                     <form action="AuthEngine" method="post">
                         <input type="hidden" name="action" value="login" />
-
                         <input type="hidden" id="loginRole" name="loginRole" value="CANDIDATE" />
 
                         <div class="input-group">
@@ -279,14 +277,19 @@
                 <div id="registerFormContainer" style="display: none;">
                     <h2>Candidate Registration</h2>
                     <p class="subtitle">Join the automated recruitment ecosystem</p>
+                    
                     <form action="AuthEngine" method="post">
                         <input type="hidden" name="action" value="register" />
-
                         <input type="hidden" name="role" value="CANDIDATE" />
 
                         <div class="input-group">
                             <label>Full Name (as per ID/Passport)</label>
                             <input type="text" name="fullName" placeholder="e.g., Nur Alin Hayani" required>
+                        </div>
+
+                        <div class="input-group">
+                            <label>Email Address</label>
+                            <input type="email" name="email" placeholder="e.g., alin@umt.edu.my" required>
                         </div>
 
                         <div class="input-group">
@@ -309,11 +312,9 @@
                 </div>
 
             </div>
-
         </div>
 
         <script>
-            // Handles changing labels dynamically on the Login section based on the active selection tab
             function selectLoginRole(role) {
                 var candidateTab = document.getElementById("tabStudent");
                 var recruiterTab = document.getElementById("tabStaff");
@@ -336,7 +337,6 @@
                 }
             }
 
-            // Swaps display blocks safely using absolute style directives to remove stacking defects
             function toggleForms(showRegister) {
                 var loginForm = document.getElementById("loginFormContainer");
                 var registerForm = document.getElementById("registerFormContainer");

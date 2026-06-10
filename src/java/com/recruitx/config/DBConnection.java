@@ -9,9 +9,9 @@ import java.sql.ResultSet;
 public class DBConnection {
 
     // Target exact schema matching your script
-    private static final String URL = "jdbc:mysql://localhost:3306/recruitx_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true";
+    private static final String URL = "jdbc:mysql://localhost:3307/recruitx_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true";
     private static final String USER = "root";
-    private static final String PASSWORD = "admin"; // Default XAMPP password is empty string
+    private static final String PASSWORD = ""; // Default XAMPP password is empty string
     private static final String DRIVER = "com.mysql.cj.jdbc.Driver";
 
     static {
