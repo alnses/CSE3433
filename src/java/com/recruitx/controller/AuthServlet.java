@@ -13,9 +13,9 @@ import javax.servlet.http.*;
 @WebServlet("/AuthEngine")
 // Crucial Annotation to enable handling of file data boundaries
 @MultipartConfig(
-    fileSizeThreshold = 1024 * 1024 * 2, // 2MB
-    maxFileSize = 1024 * 1024 * 10,      // 10MB
-    maxRequestSize = 1024 * 1024 * 50    // 50MB
+        fileSizeThreshold = 1024 * 1024 * 2, // 2MB
+        maxFileSize = 1024 * 1024 * 10, // 10MB
+        maxRequestSize = 1024 * 1024 * 50 // 50MB
 )
 public class AuthServlet extends HttpServlet {
 
@@ -32,7 +32,7 @@ public class AuthServlet extends HttpServlet {
             String username = request.getParameter("username");
             String pass = request.getParameter("password");
             String fullName = request.getParameter("fullName");
-            String email = request.getParameter("email"); 
+            String email = request.getParameter("email");
             String role = "CANDIDATE";
 
             String checkSql = "SELECT COUNT(*) FROM users WHERE username = ? OR email = ?";
@@ -40,7 +40,7 @@ public class AuthServlet extends HttpServlet {
 
                 checkStmt.setString(1, username);
                 checkStmt.setString(2, email);
-                
+
                 try (ResultSet rs = checkStmt.executeQuery()) {
                     if (rs.next() && rs.getInt(1) > 0) {
                         request.setAttribute("error", "Username or Email address already exists inside our pipeline records.");
@@ -49,13 +49,16 @@ public class AuthServlet extends HttpServlet {
                     }
                 }
 
-                String insertSql = "INSERT INTO users (username, password, role, full_name, email) VALUES (?, ?, ?, ?, ?)";
+                String insertSql
+                        = "INSERT INTO users "
+                        + "(username,password,role,full_name,email,profile_completed) "
+                        + "VALUES (?,?,?,?,?,0)";
                 try (PreparedStatement insertStmt = conn.prepareStatement(insertSql)) {
                     insertStmt.setString(1, username);
                     insertStmt.setString(2, pass);
                     insertStmt.setString(3, role);
                     insertStmt.setString(4, fullName);
-                    insertStmt.setString(5, email); 
+                    insertStmt.setString(5, email);
                     insertStmt.executeUpdate();
 
                     request.setAttribute("successMessage", "Candidate account created successfully! Please sign in.");
@@ -68,92 +71,205 @@ public class AuthServlet extends HttpServlet {
             return;
         }
 
-        // ================= NEW UPDATE CANDIDATE PROFILE HANDLER =================
+        // ================= UPDATE CANDIDATE PROFILE HANDLER =================
         if ("updateProfile".equals(action)) {
+
             HttpSession session = request.getSession(false);
-            User user = (session != null) ? (User) session.getAttribute("currentUser") : null;
-            
+            User user = (session != null)
+                    ? (User) session.getAttribute("currentUser")
+                    : null;
+
             if (user == null) {
                 response.sendRedirect("login.jsp");
                 return;
             }
 
             String fullName = request.getParameter("fullName");
-            
-            // Extract file part content from multi-part data request boundary
+            String phone = request.getParameter("phone");
+            String address = request.getParameter("address");
+
             Part filePart = request.getPart("resumePdf");
+
             String contentDisp = filePart.getHeader("content-disposition");
-            String fileName = null;
-            
+            String fileName = "";
+
             for (String token : contentDisp.split(";")) {
                 if (token.trim().startsWith("filename")) {
-                    fileName = token.substring(token.indexOf("=") + 2, token.length() - 1);
+                    fileName = token.substring(
+                            token.indexOf("=") + 2,
+                            token.length() - 1
+                    );
                 }
             }
-            
-            if (fileName != null && fileName.toLowerCase().endsWith(".pdf")) {
-                String savedFileName = "Resume_" + user.getUsername() + ".pdf";
-                
-                // Track location folder within web deployment space on server runtime execution context
-                String applicationPath = request.getServletContext().getRealPath("");
-                String uploadFilePath = applicationPath + File.separator + "uploaded_resumes";
-                
+
+            /*
+        Keep existing resume if user does not upload a new one
+             */
+            String savedFileName = user.getResumePath();
+
+            /*
+        User uploads a new resume
+             */
+            if (fileName != null && !fileName.trim().isEmpty()) {
+
+                if (!fileName.toLowerCase().endsWith(".pdf")) {
+
+                    request.setAttribute(
+                            "error",
+                            "Only PDF resumes are allowed."
+                    );
+
+                    request.getRequestDispatcher(
+                            "candidate/completeProfile.jsp"
+                    ).forward(request, response);
+
+                    return;
+                }
+
+                savedFileName = "Resume_"
+                        + user.getUsername()
+                        + ".pdf";
+
+                String applicationPath
+                        = request.getServletContext().getRealPath("");
+
+                String uploadFilePath
+                        = applicationPath
+                        + File.separator
+                        + "uploaded_resumes";
+
                 File uploadFolder = new File(uploadFilePath);
+
                 if (!uploadFolder.exists()) {
                     uploadFolder.mkdirs();
                 }
-                
-                // Write file data bytes down to destination directory pathway reference
-                filePart.write(uploadFilePath + File.separator + savedFileName);
-                
-                // Execute SQL Query to permanently record structural updates to relational db state
-                String updateSql = "UPDATE users SET full_name = ?, resume_path = ? WHERE id = ?";
-                try (Connection conn = DBConnection.getConnection(); PreparedStatement updateStmt = conn.prepareStatement(updateSql)) {
-                    updateStmt.setString(1, fullName);
-                    updateStmt.setString(2, savedFileName);
-                    updateStmt.setInt(3, user.getId());
-                    updateStmt.executeUpdate();
-                    
-                    // Synchronize local attributes assigned to active user model session
-                    user.setFullName(fullName);
-                    user.setResumePath(savedFileName);
-                    
-                    session.setAttribute("successMsg", "Profile metrics initialized and mapped successfully!");
-                    response.sendRedirect("candidate/candidatePortal.jsp");
-                    return;
-                } catch (SQLException e) {
-                    request.setAttribute("error", "Database profile pipeline sync update failure: " + e.getMessage());
-                    request.getRequestDispatcher("candidate/completeProfile.jsp").forward(request, response);
-                    return;
-                }
-            } else {
-                request.setAttribute("error", "Invalid Document Format. Profile update abort; only PDF Mode supported.");
-                request.getRequestDispatcher("candidate/completeProfile.jsp").forward(request, response);
+
+                filePart.write(
+                        uploadFilePath
+                        + File.separator
+                        + savedFileName
+                );
+            }
+
+            /*
+        First-time users MUST upload resume
+             */
+            if (savedFileName == null
+                    || savedFileName.trim().isEmpty()) {
+
+                request.setAttribute(
+                        "error",
+                        "Please upload your resume (PDF)."
+                );
+
+                request.getRequestDispatcher(
+                        "candidate/completeProfile.jsp"
+                ).forward(request, response);
+
+                return;
+            }
+
+            /*
+        Validate personal details
+             */
+            if (fullName == null || fullName.trim().isEmpty()
+                    || phone == null || phone.trim().isEmpty()
+                    || address == null || address.trim().isEmpty()) {
+
+                request.setAttribute(
+                        "error",
+                        "Please complete all required fields."
+                );
+
+                request.getRequestDispatcher(
+                        "candidate/completeProfile.jsp"
+                ).forward(request, response);
+
+                return;
+            }
+
+            /*
+        Update database
+             */
+            String updateSql
+                    = "UPDATE users "
+                    + "SET full_name=?, "
+                    + "phone=?, "
+                    + "address=?, "
+                    + "resume_path=?, "
+                    + "profile_completed=1 "
+                    + "WHERE id=?";
+
+            try (Connection conn = DBConnection.getConnection(); PreparedStatement updateStmt
+                    = conn.prepareStatement(updateSql)) {
+
+                updateStmt.setString(1, fullName);
+                updateStmt.setString(2, phone);
+                updateStmt.setString(3, address);
+                updateStmt.setString(4, savedFileName);
+                updateStmt.setInt(5, user.getId());
+
+                updateStmt.executeUpdate();
+
+                /*
+            Update session user
+                 */
+                user.setFullName(fullName);
+                user.setPhone(phone);
+                user.setAddress(address);
+                user.setResumePath(savedFileName);
+                user.setProfileCompleted(true);
+
+                session.setAttribute("currentUser", user);
+                session.setAttribute(
+                        "successMsg",
+                        "Profile completed successfully!"
+                );
+
+                response.sendRedirect(
+                        "candidate/candidatePortal.jsp"
+                );
+
+                return;
+
+            } catch (SQLException e) {
+
+                request.setAttribute(
+                        "error",
+                        "Database update failed: "
+                        + e.getMessage()
+                );
+
+                request.getRequestDispatcher(
+                        "candidate/completeProfile.jsp"
+                ).forward(request, response);
+
                 return;
             }
         }
-
         // ================= SYSTEM LOGIN ENGINE DISPATCH =================
         String userIn = request.getParameter("username");
         String passIn = request.getParameter("password");
 
-        try (Connection conn = DBConnection.getConnection(); 
-             PreparedStatement stmt = conn.prepareStatement("SELECT * FROM users WHERE username = ? AND password = ?")) {
+        try (Connection conn = DBConnection.getConnection(); PreparedStatement stmt = conn.prepareStatement("SELECT * FROM users WHERE username = ? AND password = ?")) {
             stmt.setString(1, userIn);
             stmt.setString(2, passIn);
-            
+
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
                     // UPDATED: Fetches the 'resume_path' value out of your row records
                     User user = new User(
-                        rs.getInt("id"), 
-                        rs.getString("username"), 
-                        rs.getString("role"), 
-                        rs.getString("full_name"),
-                        rs.getString("email"),
-                        rs.getString("resume_path") // READ FROM COLUMN DATA INDEX
+                            rs.getInt("id"),
+                            rs.getString("username"),
+                            rs.getString("role"),
+                            rs.getString("full_name"),
+                            rs.getString("email"),
+                            rs.getString("resume_path"),
+                            rs.getString("phone"),
+                            rs.getString("address"),
+                            rs.getBoolean("profile_completed")
                     );
-                    
+
                     HttpSession session = request.getSession(true);
                     session.setAttribute("currentUser", user);
 

@@ -6,24 +6,36 @@ public class User {
     private String username;
     private String role;
     private String fullName;
-    private String email; 
-    private String resumePath; // NEW RESUME FIELD MAPPED
+    private String email;
+    private String resumePath;
+    private String phone;
+    private String address;
+    private boolean profileCompleted;
 
-    // Full Parameterized Constructor - Updated to include resumePath
-    public User(int id, String username, String role, String fullName, String email, String resumePath) {
+    public User() {
+    }
+
+    public User(int id,
+            String username,
+            String role,
+            String fullName,
+            String email,
+            String resumePath,
+            String phone,
+            String address,
+            boolean profileCompleted) {
+
         this.id = id;
         this.username = username;
         this.role = role;
         this.fullName = fullName;
         this.email = email;
         this.resumePath = resumePath;
+        this.phone = phone;
+        this.address = address;
+        this.profileCompleted = profileCompleted;
     }
 
-    // Default Constructor
-    public User() {
-    }
-
-    // Getters and Setters
     public int getId() {
         return id;
     }
@@ -70,5 +82,29 @@ public class User {
 
     public void setResumePath(String resumePath) {
         this.resumePath = resumePath;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public boolean isProfileCompleted() {
+        return profileCompleted;
+    }
+
+    public void setProfileCompleted(boolean profileCompleted) {
+        this.profileCompleted = profileCompleted;
     }
 }
