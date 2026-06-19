@@ -260,7 +260,7 @@
                         <input type="hidden" id="loginRole" name="loginRole" value="CANDIDATE" />
 
                         <div class="input-group">
-                            <label id="usernameLabel">Candidate Matric ID / Username</label>
+                            <label id="usernameLabel">Username</label>
                             <input type="text" name="username" id="loginUsername" placeholder="e.g., s75034" required>
                         </div>
 
@@ -293,7 +293,7 @@
                         </div>
 
                         <div class="input-group">
-                            <label>Desired Username / Matric ID</label>
+                            <label>Username</label>
                             <input type="text" name="username" placeholder="e.g., s75034" required>
                         </div>
 

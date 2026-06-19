@@ -22,7 +22,7 @@
         <jsp:include page="../includes/header.jsp" />
 
         <main class="portal-main">
-            
+
             <div class="section-wrapper">
                 <div class="section-heading-group">
                     <h2>Interview Scheduling</h2>
@@ -31,6 +31,19 @@
                     Assign a specific evaluation date, clock window, and corporate teleconferencing web link to a candidate milestone. Submitting this form activates back-end notification event consumers.
                 </p>
             </div>
+
+            <%
+                if (session.getAttribute("successMsg") != null) {
+            %>
+
+            <div class="alert-banner">
+                <%= session.getAttribute("successMsg")%>
+            </div>
+
+            <%
+                    session.removeAttribute("successMsg");
+                }
+            %>
 
             <div class="form-card" style="margin: 0 auto;">
                 <form action="${pageContext.request.contextPath}/RecruitmentEngine" method="post">

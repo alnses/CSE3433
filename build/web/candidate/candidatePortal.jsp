@@ -10,7 +10,8 @@
     }
 
     // Safely structure credential fallback strings
-    String email = (user.getEmail() != null && !user.getEmail().trim().isEmpty()) ? user.getEmail() : "Not Provided";%>
+    String email = (user.getEmail() != null && !user.getEmail().trim().isEmpty()) ? user.getEmail() : "Not Provided";
+%>
 
 <!DOCTYPE html>
 <html>
@@ -83,7 +84,11 @@
                     <div class="requirements-box" style="margin-bottom: 15px; border-left: 3px solid var(--accent); background: #f8fafc;">
                         <strong style="display:block; font-size:0.75rem; text-transform:uppercase; color:var(--text-muted); margin-bottom: 2px;">Active Document Tracking ID:</strong>
                         <span style="font-family: monospace; font-size:0.88rem; color: var(--primary); font-weight:700;">
+                            <% if (user.getResumePath() != null && !user.getResumePath().trim().isEmpty()) {%>
                             📄 Resume_<%= user.getUsername()%>.pdf
+                            <% } else { %>
+                            <span style="color: red; font-style: italic;">⚠️ No Resume Uploaded</span>
+                            <% }%>
                         </span>
                     </div>
                 </div>
@@ -112,6 +117,43 @@
                     <h2>Live Vacancy Listings Board</h2>
                 </div>
 
+                <h2>Notifications</h2>
+
+                <table class="enterprise-table">
+                    <tr>
+                        <th>Message</th>
+                        <th>Date</th>
+                    </tr>
+
+                    <%
+                        String notifSql
+                                = "SELECT * FROM notifications "
+                                + "WHERE candidate_id=? "
+                                + "ORDER BY created_at DESC";
+
+                        try (Connection conn = DBConnection.getConnection(); PreparedStatement ps
+                                = conn.prepareStatement(notifSql)) {
+
+                            ps.setInt(1, user.getId());
+
+                            ResultSet rs = ps.executeQuery();
+
+                            while (rs.next()) {
+                    %>
+
+                    <tr>
+                        <td><%= rs.getString("message")%></td>
+                        <td><%= rs.getTimestamp("created_at")%></td>
+                    </tr>
+
+                    <%
+                            }
+                        } catch (Exception e) {
+                            out.println(e.getMessage());
+                        }
+                    %>
+
+                </table>
                 <div class="table-responsive-card">
                     <table class="enterprise-table">
                         <thead>
@@ -151,12 +193,22 @@
                                     </div>
                                 </td>
                                 <td style="text-align: right; vertical-align: middle;">
+                                    <%
+                                        // Business Logic Check: Evaluate if the active session user has completed their profile
+                                        boolean hasResume = (user.getResumePath() != null && !user.getResumePath().trim().isEmpty());
+                                        boolean isProfileComplete = hasResume && (user.getFullName() != null && !user.getFullName().trim().isEmpty());
+
+                                        if (isProfileComplete) {
+                                    %>
                                     <form action="${pageContext.request.contextPath}/RecruitmentEngine" method="POST" style="margin: 0;">
                                         <input type="hidden" name="action" value="applyJob">
                                         <input type="hidden" name="jobId" value="<%= rs.getInt("id")%>">
                                         <input type="hidden" name="resumeName" value="Resume_<%= user.getUsername()%>.pdf">
                                         <button type="submit" class="btn-table-apply">Apply Now</button>
                                     </form>
+                                    <% } else { %>
+                                    <button type="button" class="btn-table-apply" onclick="checkIncompleteProfile()">Apply Now</button>
+                                    <% } %>
                                 </td>
                             </tr>
                             <%
@@ -277,5 +329,11 @@
 
         </div>
 
+        <script type="text/javascript">
+            function checkIncompleteProfile() {
+                alert("Action Required:\nYour recruitment profile metrics are currently unmapped.\n\nPlease complete your personal details and upload your PDF Resume before filing job applications.");
+                window.location.href = "completeProfile.jsp";
+            }
+        </script>
     </body>
 </html>
